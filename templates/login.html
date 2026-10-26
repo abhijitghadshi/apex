@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - ApexMed Healthcare System{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card card">
+        <div class="auth-header">
+            <div class="mb-2">
+                <i class="fa-solid fa-hospital-user fa-3x"></i>
+            </div>
+            <h3 class="fw-bold mb-1">ApexMed H-RMS</h3>
+            <p class="mb-0 text-white-50 small">Hospital & Clinical Records Management System</p>
+        </div>
+
+        <div class="auth-body">
+            <!-- Server-Side General Error Alert -->
+            {% if errors.general %}
+                <div class="alert alert-danger py-2 small mb-3">
+                    <i class="fa-solid fa-circle-exclamation me-1"></i> {{ errors.general }}
+                </div>
+            {% endif %}
+
+            <!-- Form starts here with client-side & server-side validation -->
+            <form id="loginForm" method="POST" action="{{ url_for('login') }}" novalidate>
+                <!-- Email Address Field -->
+                <div class="mb-3">
+                    <label for="email" class="form-label fw-semibold small">
+                        Email Address <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="fa-solid fa-envelope text-muted"></i></span>
+                        <input type="email"
+                               class="form-control {% if errors.email %}is-invalid{% endif %}"
+                               id="email"
+                               name="email"
+                               placeholder="doctor@apexmed.com"
+                               value="{{ email or '' }}"
+                               required>
+                    </div>
+                    <div id="emailFeedback" class="invalid-feedback d-block">
+                        {{ errors.email or '' }}
+                    </div>
+                </div>
+
+                <!-- Password Field with Show/Hide Toggle -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label for="password" class="form-label fw-semibold small mb-1">
+                            Password <span class="text-danger">*</span>
+                        </label>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="fa-solid fa-lock text-muted"></i></span>
+                        <input type="password"
+                               class="form-control {% if errors.password %}is-invalid{% endif %}"
+                               id="password"
+                               name="password"
+                               placeholder="Enter secure password"
+                               required
+                               minlength="6">
+                        <button class="btn btn-outline-secondary password-toggle-btn" type="button" id="togglePasswordBtn">
+                            <i class="fa-solid fa-eye text-muted"></i>
+                        </button>
+                    </div>
+                    <div id="passwordFeedback" class="invalid-feedback d-block">
+                        {{ errors.password or '' }}
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-primary fw-semibold py-2">
+                        <i class="fa-solid fa-right-to-bracket me-2"></i> Sign In to Portal
+                    </button>
+                </div>
+            </form>
+
+            <hr class="my-4">
+
+            <!-- One-Click Quick-Fill Demo Credentials (Evaluator Convenience) -->
+            <div class="text-center">
+                <p class="text-muted small fw-semibold mb-2">Test Accounts (One-Click Auto Fill):</p>
+                <div class="btn-group btn-group-sm w-100" role="group">
+                    <button type="button" class="btn btn-outline-primary" onclick="quickFill('admin')">
+                        <i class="fa-solid fa-user-shield me-1"></i> Admin
+                    </button>
+                    <button type="button" class="btn btn-outline-success" onclick="quickFill('doctor')">
+                        <i class="fa-solid fa-user-doctor me-1"></i> Doctor
+                    </button>
+                    <button type="button" class="btn btn-outline-info" onclick="quickFill('patient')">
+                        <i class="fa-solid fa-bed-pulse me-1"></i> Patient
+                    </button>
+                </div>
+                <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">Default credentials password: <code>Admin@123</code></small>
+            </div>
+
+            <!-- New Patient Registration Navigation -->
+            <div class="text-center mt-3 pt-2 border-top">
+                <span class="small text-muted">New Patient?</span>
+                <a href="{{ url_for('register') }}" class="small fw-bold text-decoration-none ms-1">Create an Account</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

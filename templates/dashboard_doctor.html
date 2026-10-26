@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Clinical Portal - ApexMed{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+    <!-- Doctor Profile Banner -->
+    <div class="card mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, #0d6efd 0%, #0a4da2 100%); color: white;">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-white text-primary rounded-circle p-3 me-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px; font-size: 1.8rem;">
+                            <i class="fa-solid fa-user-doctor"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold mb-1">{{ current_user.full_name }}</h3>
+                            <p class="mb-0 text-white-50">
+                                <span>{{ doctor.specialization }}</span> &bull; 
+                                <span>{{ doctor.department_name }}</span> &bull; 
+                                <span class="badge bg-light text-dark">{{ doctor.qualification }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <div class="bg-white bg-opacity-10 p-3 rounded-3 d-inline-block text-start">
+                        <small class="text-white-50 d-block">Consultation Rate</small>
+                        <span class="h4 fw-bold mb-0">${{ "%.2f"|format(doctor.consultation_fee) }}</span>
+                        <span class="small text-white-50">/ visit</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointments & Consultations Section -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0 fw-bold"><i class="fa-solid fa-clipboard-user me-2 text-primary"></i> Patient Consultation Queue</h5>
+            <span class="badge bg-primary">{{ appointments|length }} Appointments</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-uppercase">
+                    <tr>
+                        <th>#Appt</th>
+                        <th>Slot</th>
+                        <th>Patient Details</th>
+                        <th>Reason for Visit</th>
+                        <th>Status</th>
+                        <th>Clinical Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in appointments %}
+                    <tr>
+                        <td class="fw-bold">#{{ a.appointment_id }}</td>
+                        <td>
+                            <div><i class="fa-regular fa-calendar me-1 text-primary"></i> {{ a.appointment_date }}</div>
+                            <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> {{ a.appointment_time }}</small>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">{{ a.patient_name }}</div>
+                            <div class="small text-muted">
+                                <span>{{ a.gender }}</span> &bull;
+                                <span>DOB: {{ a.date_of_birth }}</span> &bull;
+                                <span class="badge bg-danger-subtle text-danger border">{{ a.blood_group }}</span>
+                            </div>
+                            <div class="small text-muted"><i class="fa-solid fa-phone me-1"></i> {{ a.patient_phone }}</div>
+                        </td>
+                        <td>
+                            <div class="small text-muted">{{ a.reason_for_visit or 'General Consultation' }}</div>
+                        </td>
+                        <td>
+                            {% if a.status == 'Scheduled' %}
+                                <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock me-1"></i> Scheduled</span>
+                            {% elif a.status == 'Completed' %}
+                                <span class="badge bg-success"><i class="fa-solid fa-circle-check me-1"></i> Completed</span>
+                            {% elif a.status == 'In-Progress' %}
+                                <span class="badge bg-primary">In-Progress</span>
+                            {% else %}
+                                <span class="badge bg-danger">Cancelled</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#consultModal{{ a.appointment_id }}">
+                                <i class="fa-solid fa-stethoscope me-1"></i> Consult / Prescribe
+                            </button>
+                        </td>
+                    </tr>
+
+                    <!-- Consultation Modal for each appointment -->
+                    <div class="modal fade" id="consultModal{{ a.appointment_id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header bg-primary text-white">
+                                    <h5 class="modal-title fw-bold">
+                                        <i class="fa-solid fa-stethoscope me-2"></i> Clinical Record - Appointment #{{ a.appointment_id }}
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="POST" action="{{ url_for('doctor_update_appointment') }}">
+                                    <input type="hidden" name="appointment_id" value="{{ a.appointment_id }}">
+                                    <div class="modal-body p-4">
+                                        <div class="alert alert-info py-2 small mb-3">
+                                            <strong>Patient:</strong> {{ a.patient_name }} ({{ a.gender }}, Blood Group: {{ a.blood_group }}) | 
+                                            <strong>Chief Complaint:</strong> {{ a.reason_for_visit or 'None specified' }}
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-semibold">Consultation Status *</label>
+                                            <select name="status" class="form-select" required>
+                                                <option value="Scheduled" {% if a.status == 'Scheduled' %}selected{% endif %}>Scheduled</option>
+                                                <option value="In-Progress" {% if a.status == 'In-Progress' %}selected{% endif %}>In-Progress</option>
+                                                <option value="Completed" {% if a.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                                <option value="Cancelled" {% if a.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-semibold">Clinical Diagnosis *</label>
+                                            <textarea name="diagnosis" class="form-control" rows="2" placeholder="e.g., Acute Bronchitis, Normal sinus rhythm...">{{ a.diagnosis or '' }}</textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-semibold">Prescription & Medications *</label>
+                                            <textarea name="medicines" class="form-control" rows="3" placeholder="1. Amoxicillin 500mg (1 cap thrice daily x 5 days)&#10;2. Paracetamol 650mg (SOS for fever)">{{ a.medicines or '' }}</textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-semibold">Physician Notes & Recommendations</label>
+                                            <textarea name="doctor_notes" class="form-control" rows="2" placeholder="Rest advised, high fluid intake, follow-up after 1 week.">{{ a.doctor_notes or '' }}</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <button type="submit" class="btn btn-primary fw-semibold">
+                                            <i class="fa-solid fa-save me-1"></i> Save Clinical Record
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">No patients currently scheduled.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
